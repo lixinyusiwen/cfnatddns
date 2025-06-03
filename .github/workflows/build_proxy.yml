@@ -1,41 +1,33 @@
 name: Build Proxy EXE
-
 on:
   workflow_dispatch:  # 只允许手动触发
-
 jobs:
   build:
-    runs-on: windows-latest
-
+    runs-on: windows-2019  # 使用 Windows Server 2019，更好地支持 Win7 兼容性
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
-
+          python-version: '3.8'  # Python 3.8 是支持 Windows 7 的最后版本
+          architecture: 'x64'    # 明确指定 x64 架构
       - name: Install dependencies
         run: |
           pip install pyinstaller pyyaml requests pystray pillow pywin32
-
       - name: Build executable
         run: |
-          pyinstaller cfnatddns.py --onefile --name cfnatddns --icon=icon.ico --hidden-import=yaml
-
+          pyinstaller cfnatddns.py --onefile --name cfnatddns --icon=icon.ico --hidden-import=yaml --target-architecture=x86_64
       - name: Prepare bundle directory
         run: |
           mkdir dist_bundle
           copy dist\cfnatddns.exe dist_bundle\
           copy config.yaml dist_bundle\
           copy icon.ico dist_bundle\
-
       - name: Zip bundle
         run: powershell Compress-Archive -Path dist_bundle\* -DestinationPath cfnatddns.zip
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cfnatddns_bundle
+          name: cfnatddns_bundle_win7_x64
           path: cfnatddns.zip
